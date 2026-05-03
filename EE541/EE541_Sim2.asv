@@ -5,16 +5,37 @@ N = 10;
 d = 0.5;
 %Scenarios
 u_s = 0; % Broadside 90 degrees
-u_I = [0.18 0.3];
-SNR_dB = [0 10];
-INR_dB = [0 10];
+u_i = [0.18 0.3];
+SNR_dB = [0 10]';
+INR_dB = [0 10]';
 
+% Samples
+K = 200;
+t = 1:K;
+alpha = 0.03;
 
-n   = (-(N-1)/2 : (N-1)/2)';
+n   = (0:N)';
 u   = linspace(-1, 1, 1000);
 
-% Array Manifold function
-va = @(u0) exp(1j*2*pi*d*n*u0);
+% Steering Vector function
+vs = @(u0) exp(1j*2*pi*d*n*u0);
 % Beam pattern func
 BP = @(w0, u_arr) abs(exp(-1j*2*pi*d * u_arr(:) * n') * w0); 
 
+% Simulated signals:
+s = exp(1j*2*pi*0.05*t); % Desired signal
+i = sqrt(10.^(INR_dB/10)) * randn(1, K); % Interferer
+Noise = sqrt(10.^(-SNR_dB/10)/2) * (randn(1, K) + 1j*randn(1, K)); % Noise
+
+%Steering vectors
+Vs = vs(u_s);
+Vs = [Vs Vs];
+Vi = vs(u_i);
+
+% Received Signal Matrix
+temp = repmat(n,N,1)
+X = Vs*s + Vi*i + repmat(n,N,1);
+
+w = zeros(N, 1);       % Initialize weights
+w(1) = 1;              % Steering to broadside
+mse = zeros(1, snapshot);
